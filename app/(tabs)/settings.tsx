@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { View, StyleSheet, TouchableOpacity, Alert, ScrollView, Switch, Platform, AppState } from "react-native";
 import {
   useAbstraxionAccount,
@@ -8,6 +8,8 @@ import {
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Picker } from "@react-native-picker/picker";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useThemeColor } from "@/hooks/useThemeColor";
 
 if (!process.env.EXPO_PUBLIC_DOCUSTORE_CONTRACT_ADDRESS) {
   throw new Error("EXPO_PUBLIC_DOCUSTORE_CONTRACT_ADDRESS is not set in your environment file");
@@ -28,6 +30,15 @@ export default function Settings() {
   const { client } = useAbstraxionSigningClient();
   const { client: queryClient } = useAbstraxionClient();
 
+  // Theme colors
+  const backgroundColor = useThemeColor({}, 'background');
+  const borderColor = useThemeColor({}, 'border');
+  const textColor = useThemeColor({}, 'text');
+  const tintColor = useThemeColor({}, 'tint');
+  const buttonColor = useThemeColor({}, 'button');
+  const buttonTextColor = useThemeColor({}, 'buttonText');
+  const errorColor = useThemeColor({}, 'error');
+
   // State variables
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<Settings>({
@@ -42,6 +53,88 @@ export default function Settings() {
     language: "en",
     timezone: "UTC"
   });
+
+  const { isDarkMode, toggleDarkMode } = useTheme();
+  
+  const themedStyles = useMemo(() => ({
+    container: {
+      flex: 1,
+    },
+    contentContainer: {
+      padding: 20,
+      paddingTop: 60,
+      paddingBottom: 20,
+    },
+    title: {
+      marginBottom: 20,
+      textAlign: 'center' as const,
+    },
+    mainContainer: {
+      flex: 1,
+      gap: 20,
+    },
+    section: {
+      padding: 15,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: borderColor,
+    },
+    settingRow: {
+      flexDirection: 'row' as const,
+      justifyContent: 'space-between' as const,
+      alignItems: 'center' as const,
+    },
+    settingInfo: {
+      flex: 1,
+      marginRight: 15,
+    },
+    settingTitle: {
+      marginBottom: 5,
+    },
+    settingDescription: {
+      fontSize: 14,
+      color: textColor,
+    },
+    pickerContainer: {
+      marginTop: 10,
+    },
+    menuButton: {
+      padding: 15,
+      borderRadius: 10,
+      alignItems: 'center' as const,
+      backgroundColor: buttonColor,
+    },
+    logoutButton: {
+      backgroundColor: errorColor,
+    },
+    fullWidthButton: {
+      width: '100%' as const,
+    },
+    buttonText: {
+      color: buttonTextColor,
+      fontSize: 16,
+      fontWeight: '500' as const,
+    },
+    disabledButton: {
+      opacity: 0.5,
+    },
+    connectButtonContainer: {
+      width: '100%' as const,
+      paddingHorizontal: 20,
+      alignItems: 'center' as const,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+      padding: 20,
+    },
+    loadingText: {
+      textAlign: 'center' as const,
+      fontSize: 16,
+      color: textColor,
+    },
+  }), [backgroundColor, borderColor, textColor, tintColor, buttonColor, buttonTextColor, errorColor]);
 
   // Fetch settings
   const fetchSettings = async () => {
@@ -187,182 +280,98 @@ export default function Settings() {
   }, [isConnected, account?.bech32Address, queryClient]);
 
   return (
-    <ScrollView 
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-    >
-      <ThemedText type="title" style={styles.title}>Settings</ThemedText>
+    <ThemedView style={themedStyles.container}>
+      <ScrollView 
+        contentContainerStyle={themedStyles.contentContainer}
+      >
+        <ThemedText type="title" style={themedStyles.title}>Settings</ThemedText>
 
-      {!isConnected ? (
-        <View style={styles.connectButtonContainer}>
-          <TouchableOpacity
-            onPress={login}
-            style={[styles.menuButton, styles.fullWidthButton, isConnecting && styles.disabledButton]}
-            disabled={isConnecting}
-          >
-            <ThemedText style={styles.buttonText}>
-              {isConnecting ? "Connecting..." : "Connect Wallet"}
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
-      ) : loading ? (
-        <View style={styles.loadingContainer}>
-          <ThemedText style={styles.loadingText}>Loading settings...</ThemedText>
-        </View>
-      ) : (
-        <View style={styles.mainContainer}>
-          {/* Dark Mode */}
-          <ThemedView style={styles.section}>
-            <View style={styles.settingRow}>
-              <View style={styles.settingInfo}>
-                <ThemedText type="defaultSemiBold" style={styles.settingTitle}>Dark Mode</ThemedText>
-                <ThemedText style={styles.settingDescription}>
-                  Enable dark mode for better visibility in low-light conditions
+        {!isConnected ? (
+          <View style={themedStyles.connectButtonContainer}>
+            <TouchableOpacity
+              onPress={login}
+              style={[themedStyles.menuButton, themedStyles.fullWidthButton, isConnecting && themedStyles.disabledButton]}
+              disabled={isConnecting}
+            >
+              <ThemedText style={themedStyles.buttonText}>
+                {isConnecting ? "Connecting..." : "Connect Wallet"}
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+        ) : loading ? (
+          <View style={themedStyles.loadingContainer}>
+            <ThemedText style={themedStyles.loadingText}>Loading settings...</ThemedText>
+          </View>
+        ) : (
+          <View style={themedStyles.mainContainer}>
+            {/* Dark Mode */}
+            <ThemedView style={themedStyles.section}>
+              <View style={themedStyles.settingRow}>
+                <View style={themedStyles.settingInfo}>
+                  <ThemedText type="defaultSemiBold" style={themedStyles.settingTitle}>Dark Mode</ThemedText>
+                  <ThemedText style={themedStyles.settingDescription}>
+                    Enable dark mode for better visibility in low-light conditions
+                  </ThemedText>
+                </View>
+                <Switch
+                  value={isDarkMode}
+                  onValueChange={toggleDarkMode}
+                  disabled={loading}
+                  trackColor={{ false: borderColor, true: tintColor }}
+                  thumbColor={isDarkMode ? buttonColor : backgroundColor}
+                />
+              </View>
+            </ThemedView>
+
+            {/* Notifications */}
+            <ThemedView style={themedStyles.section}>
+              <View style={themedStyles.settingRow}>
+                <View style={themedStyles.settingInfo}>
+                  <ThemedText type="defaultSemiBold" style={themedStyles.settingTitle}>Notifications</ThemedText>
+                  <ThemedText style={themedStyles.settingDescription}>
+                    Receive notifications for important updates
+                  </ThemedText>
+                </View>
+                <Switch
+                  value={settings.notifications}
+                  onValueChange={(value) => updateSettings({ ...settings, notifications: value })}
+                  disabled={loading}
+                  trackColor={{ false: borderColor, true: tintColor }}
+                  thumbColor={settings.notifications ? buttonColor : backgroundColor}
+                />
+              </View>
+            </ThemedView>
+
+            {/* Language */}
+            <ThemedView style={themedStyles.section}>
+              <ThemedText type="defaultSemiBold" style={themedStyles.settingTitle}>Language</ThemedText>
+              <View style={themedStyles.pickerContainer}>
+                <ThemedText style={themedStyles.settingDescription}>
+                  Current language: {settings.language}
                 </ThemedText>
               </View>
-              <Switch
-                value={settings.darkMode}
-                onValueChange={(value) => updateSettings({ ...settings, darkMode: value })}
-                disabled={loading}
-              />
-            </View>
-          </ThemedView>
+            </ThemedView>
 
-          {/* Notifications */}
-          <ThemedView style={styles.section}>
-            <View style={styles.settingRow}>
-              <View style={styles.settingInfo}>
-                <ThemedText type="defaultSemiBold" style={styles.settingTitle}>Notifications</ThemedText>
-                <ThemedText style={styles.settingDescription}>
-                  Receive notifications for important updates
+            {/* Timezone */}
+            <ThemedView style={themedStyles.section}>
+              <ThemedText type="defaultSemiBold" style={themedStyles.settingTitle}>Timezone</ThemedText>
+              <View style={themedStyles.pickerContainer}>
+                <ThemedText style={themedStyles.settingDescription}>
+                  Current timezone: {settings.timezone}
                 </ThemedText>
               </View>
-              <Switch
-                value={settings.notifications}
-                onValueChange={(value) => updateSettings({ ...settings, notifications: value })}
-                disabled={loading}
-              />
-            </View>
-          </ThemedView>
+            </ThemedView>
 
-          {/* Language */}
-          <ThemedView style={styles.section}>
-            <ThemedText type="defaultSemiBold" style={styles.settingTitle}>Language</ThemedText>
-            <View style={styles.pickerContainer}>
-              <ThemedText style={styles.settingDescription}>
-                Current language: {settings.language}
-              </ThemedText>
-            </View>
-          </ThemedView>
-
-          {/* Timezone */}
-          <ThemedView style={styles.section}>
-            <ThemedText type="defaultSemiBold" style={styles.settingTitle}>Timezone</ThemedText>
-            <View style={styles.pickerContainer}>
-              <ThemedText style={styles.settingDescription}>
-                Current timezone: {settings.timezone}
-              </ThemedText>
-            </View>
-          </ThemedView>
-
-          {/* Logout Button */}
-          <TouchableOpacity
-            onPress={logout}
-            style={[styles.menuButton, styles.logoutButton, styles.fullWidthButton]}
-          >
-            <ThemedText style={styles.buttonText}>Logout</ThemedText>
-          </TouchableOpacity>
-        </View>
-      )}
-    </ScrollView>
+            {/* Logout Button */}
+            <TouchableOpacity
+              onPress={logout}
+              style={[themedStyles.menuButton, themedStyles.logoutButton, themedStyles.fullWidthButton]}
+            >
+              <ThemedText style={themedStyles.buttonText}>Logout</ThemedText>
+            </TouchableOpacity>
+          </View>
+        )}
+      </ScrollView>
+    </ThemedView>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f0f0f0",
-  },
-  contentContainer: {
-    padding: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-  },
-  title: {
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  mainContainer: {
-    flex: 1,
-    gap: 20,
-  },
-  section: {
-    padding: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  settingRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  settingInfo: {
-    flex: 1,
-    marginRight: 15,
-  },
-  settingTitle: {
-    marginBottom: 5,
-  },
-  settingDescription: {
-    fontSize: 14,
-    color: "#666",
-  },
-  pickerContainer: {
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    backgroundColor: "#fff",
-  },
-  picker: {
-    height: Platform.OS === 'ios' ? 150 : 50,
-  },
-  menuButton: {
-    padding: 15,
-    borderRadius: 10,
-    backgroundColor: "#2196F3",
-    alignItems: "center",
-  },
-  logoutButton: {
-    backgroundColor: "#dc3545",
-    marginTop: 20,
-  },
-  fullWidthButton: {
-    width: '100%',
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  connectButtonContainer: {
-    width: '100%',
-    paddingHorizontal: 20,
-    alignItems: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  loadingText: {
-    textAlign: "center",
-    fontSize: 16,
-    color: "#666",
-  },
-}); 
+} 

@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import {
   DarkTheme,
   DefaultTheme,
-  ThemeProvider,
+  ThemeProvider as NavigationThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
@@ -14,6 +14,7 @@ import { StatusBar } from "expo-status-bar";
 import { AbstraxionProvider } from "@burnt-labs/abstraxion-react-native";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 import { Buffer } from "buffer";
 import crypto from "react-native-quick-crypto";
@@ -32,7 +33,7 @@ const treasuryConfig = {
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const systemColorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
@@ -48,14 +49,16 @@ export default function RootLayout() {
   }
 
   return (
-    <AbstraxionProvider config={treasuryConfig}>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </AbstraxionProvider>
+    <ThemeProvider>
+      <AbstraxionProvider config={treasuryConfig}>
+        <NavigationThemeProvider value={systemColorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="auto" />
+        </NavigationThemeProvider>
+      </AbstraxionProvider>
+    </ThemeProvider>
   );
 }

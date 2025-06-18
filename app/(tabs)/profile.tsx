@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { View, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Image, Linking, AppState } from "react-native";
 import {
   useAbstraxionAccount,
@@ -8,6 +8,7 @@ import {
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { IconSymbol } from "@/components/ui/IconSymbol";
+import { useThemeColor } from "@/hooks/useThemeColor";
 
 if (!process.env.EXPO_PUBLIC_DOCUSTORE_CONTRACT_ADDRESS) {
   throw new Error("EXPO_PUBLIC_DOCUSTORE_CONTRACT_ADDRESS is not set in your environment file");
@@ -32,6 +33,14 @@ export default function Profile() {
   const { client } = useAbstraxionSigningClient();
   const { client: queryClient } = useAbstraxionClient();
 
+  // Theme colors
+  const backgroundColor = useThemeColor({}, 'background');
+  const borderColor = useThemeColor({}, 'border');
+  const textColor = useThemeColor({}, 'text');
+  const tintColor = useThemeColor({}, 'tint');
+  const buttonColor = useThemeColor({}, 'button');
+  const buttonTextColor = useThemeColor({}, 'buttonText');
+
   // State variables
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -42,6 +51,122 @@ export default function Profile() {
     avatar: "",
     socialLinks: {}
   });
+  
+  const themedStyles = useMemo(() => ({
+    container: {
+      flex: 1,
+    },
+    contentContainer: {
+      padding: 20,
+      paddingTop: 60,
+      paddingBottom: 20,
+    },
+    title: {
+      marginBottom: 20,
+      textAlign: 'center' as const,
+    },
+    mainContainer: {
+      flex: 1,
+      gap: 20,
+    },
+    section: {
+      padding: 15,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: borderColor,
+    },
+    sectionTitle: {
+      marginBottom: 15,
+    },
+    profileHeader: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: 15,
+    },
+    avatar: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+    },
+    profileInfo: {
+      flex: 1,
+    },
+    displayName: {
+      marginBottom: 5,
+    },
+    addressText: {
+      fontSize: 14,
+      flexWrap: 'wrap' as const,
+      flexShrink: 1,
+      color: textColor,
+    },
+    bioText: {
+      fontSize: 16,
+      lineHeight: 24,
+      color: textColor,
+    },
+    socialLink: {
+      paddingVertical: 8,
+    },
+    socialLinkText: {
+      fontSize: 16,
+      color: tintColor,
+    },
+    input: {
+      padding: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      fontSize: 16,
+      borderColor: borderColor,
+      backgroundColor: backgroundColor,
+    },
+    bioInput: {
+      height: 100,
+      textAlignVertical: 'top' as const,
+    },
+    socialInput: {
+      marginTop: 10,
+    },
+    buttonContainer: {
+      gap: 10,
+    },
+    menuButton: {
+      padding: 15,
+      borderRadius: 10,
+      alignItems: 'center' as const,
+      backgroundColor: buttonColor,
+    },
+    secondaryButton: {
+      backgroundColor: buttonColor,
+    },
+    fullWidthButton: {
+      width: '100%' as const,
+    },
+    buttonText: {
+      color: buttonTextColor,
+      fontSize: 16,
+      fontWeight: '500' as const,
+    },
+    disabledButton: {
+      opacity: 0.5,
+    },
+    connectButtonContainer: {
+      width: '100%' as const,
+      paddingHorizontal: 20,
+      alignItems: 'center' as const,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+      padding: 20,
+    },
+    loadingText: {
+      textAlign: 'center' as const,
+      fontSize: 16,
+      color: textColor,
+    },
+  }), [backgroundColor, borderColor, textColor, tintColor, buttonColor, buttonTextColor]);
 
   // Fetch profile
   const fetchProfile = async () => {
@@ -188,303 +313,187 @@ export default function Profile() {
   }, [isConnected, account?.bech32Address, queryClient]);
 
   return (
-    <ScrollView 
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-    >
-      <ThemedText type="title" style={styles.title}>My Profile</ThemedText>
+    <ThemedView style={themedStyles.container}>
+      <ScrollView 
+        contentContainerStyle={themedStyles.contentContainer}
+      >
+        <ThemedText type="title" style={themedStyles.title}>My Profile</ThemedText>
 
-      {!isConnected ? (
-        <View style={styles.connectButtonContainer}>
-          <TouchableOpacity
-            onPress={login}
-            style={[styles.menuButton, styles.fullWidthButton, isConnecting && styles.disabledButton]}
-            disabled={isConnecting}
-          >
-            <ThemedText style={styles.buttonText}>
-              {isConnecting ? "Connecting..." : "Connect Wallet"}
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
-      ) : loading ? (
-        <View style={styles.loadingContainer}>
-          <ThemedText style={styles.loadingText}>Loading profile...</ThemedText>
-        </View>
-      ) : isEditing ? (
-        <View style={styles.mainContainer}>
-          <ThemedView style={styles.section}>
-            <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Display Name</ThemedText>
-            <TextInput
-              style={styles.input}
-              value={editedProfile.displayName}
-              onChangeText={(text) => setEditedProfile({ ...editedProfile, displayName: text })}
-              placeholder="Enter display name"
-              placeholderTextColor="#666"
-            />
-          </ThemedView>
-
-          <ThemedView style={styles.section}>
-            <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Bio</ThemedText>
-            <TextInput
-              style={[styles.input, styles.bioInput]}
-              value={editedProfile.bio}
-              onChangeText={(text) => setEditedProfile({ ...editedProfile, bio: text })}
-              placeholder="Enter bio"
-              placeholderTextColor="#666"
-              multiline
-              numberOfLines={4}
-            />
-          </ThemedView>
-
-          <ThemedView style={styles.section}>
-            <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Avatar URL</ThemedText>
-            <TextInput
-              style={styles.input}
-              value={editedProfile.avatar}
-              onChangeText={(text) => setEditedProfile({ ...editedProfile, avatar: text })}
-              placeholder="Enter avatar URL"
-              placeholderTextColor="#666"
-            />
-          </ThemedView>
-
-          <ThemedView style={styles.section}>
-            <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Social Links</ThemedText>
-            <TextInput
-              style={styles.input}
-              value={editedProfile.socialLinks.twitter || ""}
-              onChangeText={(text) => setEditedProfile({
-                ...editedProfile,
-                socialLinks: { ...editedProfile.socialLinks, twitter: text }
-              })}
-              placeholder="Twitter URL"
-              placeholderTextColor="#666"
-            />
-            <TextInput
-              style={[styles.input, styles.socialInput]}
-              value={editedProfile.socialLinks.github || ""}
-              onChangeText={(text) => setEditedProfile({
-                ...editedProfile,
-                socialLinks: { ...editedProfile.socialLinks, github: text }
-              })}
-              placeholder="GitHub URL"
-              placeholderTextColor="#666"
-            />
-            <TextInput
-              style={[styles.input, styles.socialInput]}
-              value={editedProfile.socialLinks.website || ""}
-              onChangeText={(text) => setEditedProfile({
-                ...editedProfile,
-                socialLinks: { ...editedProfile.socialLinks, website: text }
-              })}
-              placeholder="Website URL"
-              placeholderTextColor="#666"
-            />
-          </ThemedView>
-
-          <View style={styles.buttonContainer}>
+        {!isConnected ? (
+          <View style={themedStyles.connectButtonContainer}>
             <TouchableOpacity
-              onPress={updateProfile}
-              style={[styles.menuButton, styles.fullWidthButton, loading && styles.disabledButton]}
-              disabled={loading}
+              onPress={login}
+              style={[themedStyles.menuButton, themedStyles.fullWidthButton, isConnecting && themedStyles.disabledButton]}
+              disabled={isConnecting}
             >
-              <ThemedText style={styles.buttonText}>
-                {loading ? "Saving..." : "Save Changes"}
+              <ThemedText style={themedStyles.buttonText}>
+                {isConnecting ? "Connecting..." : "Connect Wallet"}
               </ThemedText>
             </TouchableOpacity>
+          </View>
+        ) : loading ? (
+          <View style={themedStyles.loadingContainer}>
+            <ThemedText style={themedStyles.loadingText}>Loading profile...</ThemedText>
+          </View>
+        ) : isEditing ? (
+          <View style={themedStyles.mainContainer}>
+            <ThemedView style={themedStyles.section}>
+              <ThemedText type="defaultSemiBold" style={themedStyles.sectionTitle}>Display Name</ThemedText>
+              <TextInput
+                style={[themedStyles.input, { color: textColor }]}
+                value={editedProfile.displayName}
+                onChangeText={(text) => setEditedProfile({ ...editedProfile, displayName: text })}
+                placeholder="Enter display name"
+                placeholderTextColor={useThemeColor({}, 'placeholder')}
+              />
+            </ThemedView>
+
+            <ThemedView style={themedStyles.section}>
+              <ThemedText type="defaultSemiBold" style={themedStyles.sectionTitle}>Bio</ThemedText>
+              <TextInput
+                style={[themedStyles.input, themedStyles.bioInput, { color: textColor }]}
+                value={editedProfile.bio}
+                onChangeText={(text) => setEditedProfile({ ...editedProfile, bio: text })}
+                placeholder="Enter bio"
+                placeholderTextColor={useThemeColor({}, 'placeholder')}
+                multiline
+                numberOfLines={4}
+              />
+            </ThemedView>
+
+            <ThemedView style={themedStyles.section}>
+              <ThemedText type="defaultSemiBold" style={themedStyles.sectionTitle}>Avatar URL</ThemedText>
+              <TextInput
+                style={[themedStyles.input, { color: textColor }]}
+                value={editedProfile.avatar}
+                onChangeText={(text) => setEditedProfile({ ...editedProfile, avatar: text })}
+                placeholder="Enter avatar URL"
+                placeholderTextColor={useThemeColor({}, 'placeholder')}
+              />
+            </ThemedView>
+
+            <ThemedView style={themedStyles.section}>
+              <ThemedText type="defaultSemiBold" style={themedStyles.sectionTitle}>Social Links</ThemedText>
+              <TextInput
+                style={themedStyles.input}
+                value={editedProfile.socialLinks.twitter || ""}
+                onChangeText={(text) => setEditedProfile({
+                  ...editedProfile,
+                  socialLinks: { ...editedProfile.socialLinks, twitter: text }
+                })}
+                placeholder="Twitter URL"
+                placeholderTextColor="#666"
+              />
+              <TextInput
+                style={[themedStyles.input, themedStyles.socialInput]}
+                value={editedProfile.socialLinks.github || ""}
+                onChangeText={(text) => setEditedProfile({
+                  ...editedProfile,
+                  socialLinks: { ...editedProfile.socialLinks, github: text }
+                })}
+                placeholder="GitHub URL"
+                placeholderTextColor="#666"
+              />
+              <TextInput
+                style={[themedStyles.input, themedStyles.socialInput]}
+                value={editedProfile.socialLinks.website || ""}
+                onChangeText={(text) => setEditedProfile({
+                  ...editedProfile,
+                  socialLinks: { ...editedProfile.socialLinks, website: text }
+                })}
+                placeholder="Website URL"
+                placeholderTextColor="#666"
+              />
+            </ThemedView>
+
+            <View style={themedStyles.buttonContainer}>
+              <TouchableOpacity
+                onPress={updateProfile}
+                style={[themedStyles.menuButton, themedStyles.fullWidthButton, loading && themedStyles.disabledButton]}
+                disabled={loading}
+              >
+                <ThemedText style={themedStyles.buttonText}>
+                  {loading ? "Saving..." : "Save Changes"}
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setIsEditing(false);
+                  setEditedProfile(profile || editedProfile);
+                }}
+                style={[themedStyles.menuButton, themedStyles.secondaryButton, themedStyles.fullWidthButton]}
+              >
+                <ThemedText style={themedStyles.buttonText}>Cancel</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View style={themedStyles.mainContainer}>
+            <ThemedView style={themedStyles.section}>
+              <View style={themedStyles.profileHeader}>
+                {profile?.avatar && (
+                  <Image
+                    source={{ uri: profile.avatar }}
+                    style={themedStyles.avatar}
+                  />
+                )}
+                <View style={themedStyles.profileInfo}>
+                  <ThemedText type="title" style={themedStyles.displayName}>
+                    {profile?.displayName || "Anonymous"}
+                  </ThemedText>
+                  <ThemedText style={themedStyles.addressText}>
+                    {account?.bech32Address}
+                  </ThemedText>
+                </View>
+              </View>
+            </ThemedView>
+
+            {profile?.bio && (
+              <ThemedView style={themedStyles.section}>
+                <ThemedText type="defaultSemiBold" style={themedStyles.sectionTitle}>Bio</ThemedText>
+                <ThemedText style={themedStyles.bioText}>{profile.bio}</ThemedText>
+              </ThemedView>
+            )}
+
+            {(profile?.socialLinks?.twitter || profile?.socialLinks?.github || profile?.socialLinks?.website) && (
+              <ThemedView style={themedStyles.section}>
+                <ThemedText type="defaultSemiBold" style={themedStyles.sectionTitle}>Social Links</ThemedText>
+                {profile.socialLinks.twitter && (
+                  <TouchableOpacity
+                    onPress={() => Linking.openURL(profile.socialLinks.twitter!)}
+                    style={themedStyles.socialLink}
+                  >
+                    <ThemedText style={themedStyles.socialLinkText}>Twitter</ThemedText>
+                  </TouchableOpacity>
+                )}
+                {profile.socialLinks.github && (
+                  <TouchableOpacity
+                    onPress={() => Linking.openURL(profile.socialLinks.github!)}
+                    style={themedStyles.socialLink}
+                  >
+                    <ThemedText style={themedStyles.socialLinkText}>GitHub</ThemedText>
+                  </TouchableOpacity>
+                )}
+                {profile.socialLinks.website && (
+                  <TouchableOpacity
+                    onPress={() => Linking.openURL(profile.socialLinks.website!)}
+                    style={themedStyles.socialLink}
+                  >
+                    <ThemedText style={themedStyles.socialLinkText}>Website</ThemedText>
+                  </TouchableOpacity>
+                )}
+              </ThemedView>
+            )}
+
             <TouchableOpacity
-              onPress={() => {
-                setIsEditing(false);
-                setEditedProfile(profile || editedProfile);
-              }}
-              style={[styles.menuButton, styles.secondaryButton, styles.fullWidthButton]}
+              onPress={() => setIsEditing(true)}
+              style={[themedStyles.menuButton, themedStyles.fullWidthButton]}
             >
-              <ThemedText style={styles.buttonText}>Cancel</ThemedText>
+              <ThemedText style={themedStyles.buttonText}>Edit Profile</ThemedText>
             </TouchableOpacity>
           </View>
-        </View>
-      ) : (
-        <View style={styles.mainContainer}>
-          <ThemedView style={styles.section}>
-            <View style={styles.profileHeader}>
-              {profile?.avatar && (
-                <Image
-                  source={{ uri: profile.avatar }}
-                  style={styles.avatar}
-                />
-              )}
-              <View style={styles.profileInfo}>
-                <ThemedText type="title" style={styles.displayName}>
-                  {profile?.displayName || "Anonymous"}
-                </ThemedText>
-                <ThemedText style={styles.addressText}>
-                  {account?.bech32Address}
-                </ThemedText>
-              </View>
-            </View>
-          </ThemedView>
-
-          {profile?.bio && (
-            <ThemedView style={styles.section}>
-              <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Bio</ThemedText>
-              <ThemedText style={styles.bioText}>{profile.bio}</ThemedText>
-            </ThemedView>
-          )}
-
-          {(profile?.socialLinks?.twitter || profile?.socialLinks?.github || profile?.socialLinks?.website) && (
-            <ThemedView style={styles.section}>
-              <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Social Links</ThemedText>
-              {profile.socialLinks.twitter && (
-                <TouchableOpacity
-                  onPress={() => Linking.openURL(profile.socialLinks.twitter!)}
-                  style={styles.socialLink}
-                >
-                  <ThemedText style={styles.socialLinkText}>Twitter</ThemedText>
-                </TouchableOpacity>
-              )}
-              {profile.socialLinks.github && (
-                <TouchableOpacity
-                  onPress={() => Linking.openURL(profile.socialLinks.github!)}
-                  style={styles.socialLink}
-                >
-                  <ThemedText style={styles.socialLinkText}>GitHub</ThemedText>
-                </TouchableOpacity>
-              )}
-              {profile.socialLinks.website && (
-                <TouchableOpacity
-                  onPress={() => Linking.openURL(profile.socialLinks.website!)}
-                  style={styles.socialLink}
-                >
-                  <ThemedText style={styles.socialLinkText}>Website</ThemedText>
-                </TouchableOpacity>
-              )}
-            </ThemedView>
-          )}
-
-          <TouchableOpacity
-            onPress={() => setIsEditing(true)}
-            style={[styles.menuButton, styles.fullWidthButton]}
-          >
-            <ThemedText style={styles.buttonText}>Edit Profile</ThemedText>
-          </TouchableOpacity>
-        </View>
-      )}
-    </ScrollView>
+        )}
+      </ScrollView>
+    </ThemedView>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f0f0f0",
-  },
-  contentContainer: {
-    padding: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-  },
-  title: {
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  mainContainer: {
-    flex: 1,
-    gap: 20,
-  },
-  section: {
-    padding: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  sectionTitle: {
-    marginBottom: 15,
-  },
-  profileHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 15,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  displayName: {
-    marginBottom: 5,
-  },
-  addressText: {
-    fontSize: 14,
-    color: "#666",
-    flexWrap: 'wrap',
-    flexShrink: 1,
-  },
-  bioText: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: "#666",
-  },
-  socialLink: {
-    paddingVertical: 8,
-  },
-  socialLinkText: {
-    fontSize: 16,
-    color: "#2196F3",
-  },
-  input: {
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    fontSize: 16,
-    backgroundColor: "#fff",
-  },
-  bioInput: {
-    height: 100,
-    textAlignVertical: "top",
-  },
-  socialInput: {
-    marginTop: 10,
-  },
-  buttonContainer: {
-    gap: 10,
-  },
-  menuButton: {
-    padding: 15,
-    borderRadius: 10,
-    backgroundColor: "#2196F3",
-    alignItems: "center",
-  },
-  secondaryButton: {
-    backgroundColor: "#666",
-  },
-  fullWidthButton: {
-    width: '100%',
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  connectButtonContainer: {
-    width: '100%',
-    paddingHorizontal: 20,
-    alignItems: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  loadingText: {
-    textAlign: "center",
-    fontSize: 16,
-    color: "#666",
-  },
-}); 
+} 
