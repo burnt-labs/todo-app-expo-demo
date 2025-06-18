@@ -1,50 +1,105 @@
-# Welcome to your Expo app 👋
+# XION Todo Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native mobile application built with Expo that demonstrates how to interact with the DocuStore smart contract. This app allows users to create and manage todos, update their profiles, and customize app settings - all while leveraging XION's account abstraction capabilities.
 
-## Get started
+## Features
 
-1. Install dependencies
+- Connect with XION Meta Accounts
+- Create, complete, and delete todos
+- Update user profiles with display name, bio, and social links
+- Customize app settings (dark mode, notifications, language, timezone)
+- Gasless transactions using XION's Treasury contract
+- Comprehensive theming system with light/dark mode support
 
-   ```bash
-   npm install
-   ```
+## Prerequisites
 
-2. Start the app
+- Node.js (v18 or later)
+- npm
+- iOS Simulator (for Mac) or Android Emulator
 
-   ```bash
-    npx expo start
-   ```
+## Installation
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+1. Clone the repository:
 ```bash
-npm run reset-project
+git clone https://github.com/burnt-labs/todo-app-expo-demo.git
+cd todo-app-expo-demo
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Install dependencies:
+```bash
+npm install
+```
 
-## Learn more
+3. Create a `.env.local` file in the root directory with the following environment variables:
+```env
+EXPO_PUBLIC_TODO_CONTRACT_ADDRESS="xion1svpts9q2ml4ahgc4tuu95w8cqzv988s6mf5mupt5kt56gvdnklks9hzar4"
+EXPO_PUBLIC_TREASURY_CONTRACT_ADDRESS="xion1aza0jdzfc7g0u64k8qcvcxfppll0cjeer56k38vpshe3p26q5kzswpywp9"
+EXPO_PUBLIC_RPC_ENDPOINT="https://rpc.xion-testnet-2.burnt.com:443"
+EXPO_PUBLIC_REST_ENDPOINT="https://api.xion-testnet-2.burnt.com"
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Running the App
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### iOS
+```bash
+npx expo run:ios
+```
 
-## Join the community
+### Android
+```bash
+npx expo run:android
+```
 
-Join our community of developers creating universal apps.
+## App Structure
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The app is organized into three main collections in the DocuStore contract:
+
+### Todos Collection
+```typescript
+type Todo = {
+  id: string;
+  title: string;
+  text: string;
+  completed: boolean;
+  created_at: string;
+};
+```
+
+### Profiles Collection
+```typescript
+type Profile = {
+  displayName: string;
+  bio: string;
+  avatar: string;
+  socialLinks: {
+    twitter?: string;
+    github?: string;
+    website?: string;
+  };
+};
+```
+
+### Settings Collection
+```typescript
+interface Settings {
+  darkMode: boolean;
+  notifications: boolean;
+  language: string;
+  timezone: string;
+}
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Support
+
+For more information about XION and its features, visit:
+- [XION Documentation](https://docs.burnt.com/xion)
+- [XION Discord](https://discord.gg/burnt)
+- [XION GitHub](https://github.com/burnt-labs)
