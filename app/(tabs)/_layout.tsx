@@ -7,9 +7,12 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const backgroundColor = useThemeColor({}, 'background');
+  const tabBarBackgroundColor = useThemeColor({}, 'background');
 
   return (
     <Tabs
@@ -17,14 +20,17 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
+        tabBarBackground: () => null,
+        tabBarStyle: {
+          backgroundColor: tabBarBackgroundColor,
+          borderTopColor: useThemeColor({}, 'border'),
+          ...Platform.select({
+            ios: {
+              position: 'absolute',
+            },
+            default: {},
+          }),
+        },
       }}>
       <Tabs.Screen
         name="index"

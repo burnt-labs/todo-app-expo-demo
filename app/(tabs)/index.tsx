@@ -11,6 +11,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 type RootStackParamList = {
   index: { refresh?: number };
@@ -94,11 +95,24 @@ export default function Index() {
 
   // Fetch todos
   const fetchTodos = async () => {
-    if (!queryClient || !account) return;
+    if (!queryClient || !account) {
+      console.log("Cannot fetch todos - missing queryClient or account:", { 
+        hasQueryClient: !!queryClient, 
+        hasAccount: !!account,
+        accountAddress: account?.bech32Address 
+      });
+      return;
+    }
     
     const contractAddress = process.env.EXPO_PUBLIC_DOCUSTORE_CONTRACT_ADDRESS as string;
+    console.log("Fetching todos with contract address:", contractAddress);
     
     try {
+      console.log("Querying contract with params:", {
+        owner: account.bech32Address,
+        collection: "todos"
+      });
+      
       const response = await queryClient.queryContractSmart(contractAddress, {
         UserDocuments: {
           owner: account.bech32Address,
@@ -106,9 +120,13 @@ export default function Index() {
         }
       });
       
+      console.log("Raw response from contract:", response);
+      
       if (response?.documents) {
+        console.log("Documents found:", response.documents);
         const todosList = response.documents.map(([id, doc]: [string, any]) => {
           const data = typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data;
+          console.log("Processing todo:", { id, data });
           return {
             id,
             title: data.title,
@@ -125,7 +143,7 @@ export default function Index() {
           return dateB - dateA;
         });
         
-        console.log("Sorted todos:", sortedTodos.map((t: Todo) => ({ id: t.id, created_at: t.created_at })));
+        console.log("Final sorted todos:", sortedTodos);
         setTodos(sortedTodos);
         
         // Update summary
@@ -136,6 +154,7 @@ export default function Index() {
           pending: sortedTodos.length - completed
         });
       } else {
+        console.log("No documents found in response");
         setTodos([]);
         setSummary({ total: 0, completed: 0, pending: 0 });
       }
@@ -228,19 +247,11 @@ export default function Index() {
 
   // Effect to fetch todos when account changes or refresh parameter changes
   useEffect(() => {
-    console.log("Account changed or refresh triggered, fetching todos");
+    console.log("Fetching todos - account changed, refresh triggered, or component mounted");
     if (account?.bech32Address) {
       fetchTodos();
     }
   }, [account?.bech32Address, navigation.getState().routes.find(r => r.name === 'index')?.params?.refresh]);
-
-  // Also fetch todos when the component mounts
-  useEffect(() => {
-    console.log("Component mounted, fetching todos");
-    if (account?.bech32Address) {
-      fetchTodos();
-    }
-  }, []);
 
   // Pull to refresh
   const onRefresh = async () => {
@@ -319,9 +330,19 @@ export default function Index() {
     }
   };
 
+  const backgroundColor = useThemeColor({}, 'background');
+  const cardColor = useThemeColor({}, 'card');
+  const borderColor = useThemeColor({}, 'border');
+  const inputColor = useThemeColor({}, 'input');
+  const inputTextColor = useThemeColor({}, 'inputText');
+  const placeholderColor = useThemeColor({}, 'placeholder');
+  const buttonColor = useThemeColor({}, 'button');
+  const buttonTextColor = useThemeColor({}, 'buttonText');
+  const disabledColor = useThemeColor({}, 'disabled');
+
   return (
     <ScrollView 
-      style={styles.container}
+      style={[styles.container, { backgroundColor }]}
       contentContainerStyle={styles.contentContainer}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -333,10 +354,15 @@ export default function Index() {
         <View style={styles.connectButtonContainer}>
           <TouchableOpacity
             onPress={login}
-            style={[styles.menuButton, styles.fullWidthButton, isConnecting && styles.disabledButton]}
+            style={[
+              styles.menuButton,
+              styles.fullWidthButton,
+              isConnecting && styles.disabledButton,
+              { backgroundColor: buttonColor }
+            ]}
             disabled={isConnecting}
           >
-            <ThemedText style={styles.buttonText}>
+            <ThemedText style={[styles.buttonText, { color: buttonTextColor }]}>
               {isConnecting ? "Connecting..." : "Connect Wallet"}
             </ThemedText>
           </TouchableOpacity>
@@ -345,7 +371,7 @@ export default function Index() {
         <View style={styles.mainContainer}>
           {/* Summary Section */}
           <View style={styles.section}>
-            <View style={styles.summaryContainer}>
+            <View style={[styles.summaryContainer, { backgroundColor: cardColor }]}>
               <View style={styles.statItem}>
                 <ThemedText type="title">{summary.total}</ThemedText>
                 <ThemedText style={styles.statLabel}>Total</ThemedText>
@@ -364,18 +390,30 @@ export default function Index() {
           {/* Add Todo Form */}
           <View style={styles.section}>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: inputColor,
+                  color: inputTextColor,
+                  borderColor: borderColor
+                }
+              ]}
               value={newTodoText}
               onChangeText={setNewTodoText}
               placeholder="Enter todo text"
-              placeholderTextColor="#666"
+              placeholderTextColor={placeholderColor}
             />
             <TouchableOpacity
               onPress={addTodo}
-              style={[styles.menuButton, styles.fullWidthButton, (!newTodoText.trim() || loading) && styles.disabledButton]}
+              style={[
+                styles.menuButton,
+                styles.fullWidthButton,
+                (!newTodoText.trim() || loading) && styles.disabledButton,
+                { backgroundColor: buttonColor }
+              ]}
               disabled={!newTodoText.trim() || loading}
             >
-              <ThemedText style={styles.buttonText}>
+              <ThemedText style={[styles.buttonText, { color: buttonTextColor }]}>
                 {loading ? "Adding..." : "Add Todo"}
               </ThemedText>
             </TouchableOpacity>
@@ -387,12 +425,26 @@ export default function Index() {
               <ThemedText style={styles.emptyText}>No todos yet. Add one above!</ThemedText>
             ) : (
               todos.map((todo) => (
-                <View key={todo.id} style={styles.todoItem}>
+                <View 
+                  key={todo.id} 
+                  style={[
+                    styles.todoItem, 
+                    { 
+                      backgroundColor: cardColor,
+                      borderWidth: 1,
+                      borderColor: borderColor
+                    }
+                  ]}
+                >
                   <TouchableOpacity
                     style={styles.todoContent}
                     onPress={() => toggleTodo(todo)}
                   >
-                    <View style={[styles.checkbox, todo.completed && styles.checkboxChecked]}>
+                    <View style={[
+                      styles.checkbox,
+                      { borderColor: borderColor },
+                      todo.completed && styles.checkboxChecked
+                    ]}>
                       {todo.completed && (
                         <IconSymbol name="checkmark" size={16} color="#fff" />
                       )}
@@ -410,7 +462,7 @@ export default function Index() {
                     onPress={() => deleteTodo(todo.id)}
                     style={styles.deleteButton}
                   >
-                    <IconSymbol name="trash.fill" size={24} color="#ff3b30" />
+                    <IconSymbol name="trash.fill" size={24} color={useThemeColor({}, 'error')} />
                   </TouchableOpacity>
                 </View>
               ))
@@ -425,7 +477,6 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f0f0f0",
   },
   contentContainer: {
     padding: 20,
@@ -447,7 +498,6 @@ const styles = StyleSheet.create({
   summaryContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 15,
   },
@@ -457,21 +507,17 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 14,
-    color: "#666",
   },
   input: {
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ddd",
     fontSize: 16,
-    backgroundColor: "#fff",
     width: '100%',
   },
   todoItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 15,
     marginBottom: 10,
@@ -486,7 +532,6 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: "#ddd",
     marginRight: 10,
   },
   checkboxChecked: {
@@ -495,12 +540,11 @@ const styles = StyleSheet.create({
   todoText: {
     flex: 1,
     fontSize: 16,
-    color: "#11181C",
     marginLeft: 10,
   },
   todoTextCompleted: {
     textDecorationLine: "line-through",
-    color: "#666666",
+    opacity: 0.6,
   },
   deleteButton: {
     padding: 8,
@@ -514,14 +558,12 @@ const styles = StyleSheet.create({
   menuButton: {
     padding: 15,
     borderRadius: 10,
-    backgroundColor: "#2196F3",
     alignItems: "center",
   },
   fullWidthButton: {
     width: '100%',
   },
   buttonText: {
-    color: "#fff",
     fontSize: 16,
     fontWeight: "500",
   },
@@ -530,6 +572,5 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: "center",
-    color: "#666",
   },
 });
