@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { View, StyleSheet, Text, TouchableOpacity, Alert, TextInput, ScrollView, Clipboard, Linking, RefreshControl } from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity, Alert, TextInput, ScrollView, Clipboard, Linking, RefreshControl, ActivityIndicator } from "react-native";
 import {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
@@ -341,14 +341,15 @@ export default function Index() {
   const disabledColor = useThemeColor({}, 'disabled');
 
   return (
-    <ScrollView 
-      style={[styles.container, { backgroundColor }]}
-      contentContainerStyle={styles.contentContainer}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-      <ThemedText type="title" style={styles.title}>Todo List</ThemedText>
+    <View style={[styles.container, { backgroundColor }]}>
+      <ScrollView 
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <ThemedText type="title" style={styles.title}>Todo List</ThemedText>
 
       {!isConnected ? (
         <View style={styles.connectButtonContainer}>
@@ -402,16 +403,17 @@ export default function Index() {
               onChangeText={setNewTodoText}
               placeholder="Enter todo text"
               placeholderTextColor={placeholderColor}
+              editable={!loading && !loadingAction}
             />
             <TouchableOpacity
               onPress={addTodo}
               style={[
                 styles.menuButton,
                 styles.fullWidthButton,
-                (!newTodoText.trim() || loading) && styles.disabledButton,
+                (!newTodoText.trim() || loading || !!loadingAction) && styles.disabledButton,
                 { backgroundColor: buttonColor }
               ]}
-              disabled={!newTodoText.trim() || loading}
+              disabled={!newTodoText.trim() || loading || !!loadingAction}
             >
               <ThemedText style={[styles.buttonText, { color: buttonTextColor }]}>
                 {loading ? "Adding..." : "Add Todo"}
@@ -439,6 +441,7 @@ export default function Index() {
                   <TouchableOpacity
                     style={styles.todoContent}
                     onPress={() => toggleTodo(todo)}
+                    disabled={!!loadingAction}
                   >
                     <View style={[
                       styles.checkbox,
@@ -461,6 +464,7 @@ export default function Index() {
                   <TouchableOpacity
                     onPress={() => deleteTodo(todo.id)}
                     style={styles.deleteButton}
+                    disabled={!!loadingAction}
                   >
                     <IconSymbol name="trash.fill" size={24} color={useThemeColor({}, 'error')} />
                   </TouchableOpacity>
@@ -470,7 +474,20 @@ export default function Index() {
           </View>
         </View>
       )}
-    </ScrollView>
+      </ScrollView>
+      
+      {/* Global Loading Overlay */}
+      {(loadingAction || loading) && (
+        <View style={styles.globalLoadingOverlay}>
+          <View style={[styles.loadingContent, { backgroundColor: cardColor }]}>
+            <ActivityIndicator size="large" color={useThemeColor({}, 'tint')} />
+            <ThemedText style={styles.loadingText}>
+              {loading ? 'Adding...' : loadingAction.type === 'complete' ? 'Updating...' : 'Deleting...'}
+            </ThemedText>
+          </View>
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -521,6 +538,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 15,
     marginBottom: 10,
+    position: 'relative',
   },
   todoContent: {
     flexDirection: "row",
@@ -572,5 +590,38 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: "center",
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  globalLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    minWidth: 150,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
   },
 });
