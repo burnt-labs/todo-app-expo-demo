@@ -70,11 +70,29 @@ const retryOperation = async <T,>(
 };
 
 export default function Index() {
-  // Abstraxion hooks
-  const { data: account, logout, login, isConnected, isConnecting } = useAbstraxionAccount();
-  const { client } = useAbstraxionSigningClient();
-  const { client: queryClient } = useAbstraxionClient();
+  // Theme color hooks - all at top level
+  const backgroundColor = useThemeColor({}, 'background');
+  const cardColor = useThemeColor({}, 'card');
+  const borderColor = useThemeColor({}, 'border');
+  const inputColor = useThemeColor({}, 'input');
+  const inputTextColor = useThemeColor({}, 'inputText');
+  const placeholderColor = useThemeColor({}, 'placeholder');
+  const buttonColor = useThemeColor({}, 'button');
+  const buttonTextColor = useThemeColor({}, 'buttonText');
+  const disabledColor = useThemeColor({}, 'disabled');
+  const errorColor = useThemeColor({}, 'error');
+  const tintColor = useThemeColor({}, 'tint');
+
+  // Abstraxion hooks - always call them unconditionally
+  const abstraxionAccount = useAbstraxionAccount();
+  const abstraxionSigningClient = useAbstraxionSigningClient();
+  const abstraxionClient = useAbstraxionClient();
   const navigation = useNavigation<NavigationProp>();
+
+  // Destructure with fallbacks to ensure stable references
+  const { data: account, logout, login, isConnected, isConnecting } = abstraxionAccount || {};
+  const { client } = abstraxionSigningClient || {};
+  const { client: queryClient } = abstraxionClient || {};
 
   // State variables
   const [loading, setLoading] = useState(false);
@@ -330,16 +348,6 @@ export default function Index() {
     }
   };
 
-  const backgroundColor = useThemeColor({}, 'background');
-  const cardColor = useThemeColor({}, 'card');
-  const borderColor = useThemeColor({}, 'border');
-  const inputColor = useThemeColor({}, 'input');
-  const inputTextColor = useThemeColor({}, 'inputText');
-  const placeholderColor = useThemeColor({}, 'placeholder');
-  const buttonColor = useThemeColor({}, 'button');
-  const buttonTextColor = useThemeColor({}, 'buttonText');
-  const disabledColor = useThemeColor({}, 'disabled');
-
   return (
     <View style={[styles.container, { backgroundColor }]}>
       <ScrollView 
@@ -466,7 +474,7 @@ export default function Index() {
                     style={styles.deleteButton}
                     disabled={!!loadingAction}
                   >
-                    <IconSymbol name="trash.fill" size={24} color={useThemeColor({}, 'error')} />
+                    <IconSymbol name="trash.fill" size={24} color={errorColor} />
                   </TouchableOpacity>
                 </View>
               ))
@@ -480,9 +488,9 @@ export default function Index() {
       {(loadingAction || loading) && (
         <View style={styles.globalLoadingOverlay}>
           <View style={[styles.loadingContent, { backgroundColor: cardColor }]}>
-            <ActivityIndicator size="large" color={useThemeColor({}, 'tint')} />
+            <ActivityIndicator size="large" color={tintColor} />
             <ThemedText style={styles.loadingText}>
-              {loading ? 'Adding...' : loadingAction.type === 'complete' ? 'Updating...' : 'Deleting...'}
+              {loading ? 'Adding...' : loadingAction?.type === 'complete' ? 'Updating...' : 'Deleting...'}
             </ThemedText>
           </View>
         </View>

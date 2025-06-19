@@ -13,6 +13,7 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const backgroundColor = useThemeColor({}, 'background');
   const tabBarBackgroundColor = useThemeColor({}, 'background');
+  const borderColor = useThemeColor({}, 'border');
 
   return (
     <Tabs
@@ -23,7 +24,7 @@ export default function TabLayout() {
         tabBarBackground: () => null,
         tabBarStyle: {
           backgroundColor: tabBarBackgroundColor,
-          borderTopColor: useThemeColor({}, 'border'),
+          borderTopColor: borderColor,
           ...Platform.select({
             ios: {
               position: 'absolute',
